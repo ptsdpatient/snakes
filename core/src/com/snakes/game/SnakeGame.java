@@ -17,10 +17,10 @@ public class SnakeGame extends ApplicationAdapter {
 	Texture playerTexture,wall,grass;
 	Sprite player;
 	Array<String> playerBody=new Array<>();
-	float playerX=30,playerY=30,rotation=0f,playerSpeed=0.2f,targetRotation=0f,initialRotation=0f;
+	float playerX=30,playerY=30,rotation=0f,playerSpeed=0.3f,targetRotation=0f,initialRotation=0f;
 
 
-	public void handlePlayerDirection(float rotation,float speed){
+	public void handlePlayerSpeed(float rotation,float speed){
 		switch((int) rotation){
 			case 0:
 			case 360:
@@ -49,7 +49,7 @@ public class SnakeGame extends ApplicationAdapter {
 	@Override
 	public void render () {
 		ScreenUtils.clear(1, 0, 0, 1);
-		handlePlayerDirection(rotation,playerSpeed);
+		handlePlayerSpeed(rotation,playerSpeed);
 		float delta = Gdx.graphics.getDeltaTime();
 
 
@@ -108,7 +108,7 @@ public class SnakeGame extends ApplicationAdapter {
 		@Override
 		public boolean keyUp(int keycode) {
 			if(keycode==Input.Keys.SPACE){
-				playerSpeed=0.2f;
+				playerSpeed=0.3f;
 			}
 			return false;
 		}
