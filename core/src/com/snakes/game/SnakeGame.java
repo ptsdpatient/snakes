@@ -19,12 +19,11 @@ import com.badlogic.gdx.InputProcessor;
 
 public class SnakeGame extends ApplicationAdapter {
 	SpriteBatch batch;
-	Texture playerTexture,wall,grass;
-	Sprite player;
+	Texture playerTexture,wall,grass,collectibleTexture;
+	Sprite player,collectible;
 	Array<String> playerBody=new Array<>();
-	float mouseX,mouseY,playerX=300,angleRadians,playerY=300,rotation=0f,playerSpeed=0.5f,targetRotation=0f,initialRotation=0f,dx,dy;
-	float x,y;
-	double distance=1;
+	float x,y,playerX=300,playerY=300,rotation=0f,playerSpeed=0.5f,targetRotation=0f,initialRotation=0f;
+
 
 	public void handlePlayerSpeed(float rotation,float speed){
 		switch((int) rotation){
@@ -48,10 +47,21 @@ public class SnakeGame extends ApplicationAdapter {
 		inputhandler inputprocessor = new inputhandler();
 		Gdx.input.setInputProcessor(inputprocessor);
 		batch = new SpriteBatch();
+
+		//texture initialization
 		playerTexture = new Texture("./player/head.png");
+		collectibleTexture = new Texture("./collectible/flower.png");
 		grass = new Texture("./level_1/background.png");
 		wall = new Texture("./level_1/maze.png");
+
+		//Sprites initialization
 		player= new Sprite(playerTexture);
+		player.setSize(30,25);
+		player.setOrigin(15,12);
+
+		collectible= new Sprite(collectibleTexture);
+		collectible.setPosition(200f,200f);
+		collectible.setRotation(100f);
 	}
 
 	@Override
@@ -60,7 +70,7 @@ public class SnakeGame extends ApplicationAdapter {
 		handlePlayerSpeed(rotation,playerSpeed);
 		float delta = Gdx.graphics.getDeltaTime();
 		if(rotation!=targetRotation) {
-			Gdx.app.log("updateInfo", rotation + " , " + targetRotation);
+			//Gdx.app.log("updateInfo", rotation + " , " + targetRotation);
 			if(targetRotation==90.0f &&(rotation>=0f&&rotation<=90f)){
 				rotation+=2.5;
 			}else if(targetRotation==90f &&(rotation<=180f&&rotation>=90f)){
@@ -83,13 +93,13 @@ public class SnakeGame extends ApplicationAdapter {
 		//float delta = Gdx.graphics.getDeltaTime();
 		//Gdx.app.log("","sprite x : "+player.getHeight());
 		//Gdx.app.log("rotation is : ",rotation+" "+"mouse X is : "+ mouseX + " mouse Y is : "+mouseY + " angle is : "+rotation);
-		playerX+=x/distance;
-		playerY+=-y/distance;
-
+		player.setRotation(rotation);
+		player.setPosition(playerX,playerY);
 		batch.begin();
 		batch.draw(grass, 0, 0);
 		batch.draw(wall,0,0);
-		batch.draw(player,playerX,playerY,0,10,30,20,1,1,rotation);
+		player.draw(batch);
+		collectible.draw(batch);
 		batch.end();
 	}
 	
@@ -112,7 +122,7 @@ public class SnakeGame extends ApplicationAdapter {
 				default : break;
 			}}
 
-			Gdx.app.log("rotationInfo",initialRotation+" , "+targetRotation);
+			//Gdx.app.log("rotationInfo",initialRotation+" , "+targetRotation);
 			if(keycode==Input.Keys.SPACE){
 				playerSpeed=0.7f;
 			}
@@ -157,6 +167,9 @@ public class SnakeGame extends ApplicationAdapter {
 		@Override
 		public boolean mouseMoved(int screenX, int screenY) {
 
+			x=screenX -collectible.getX();
+			y=screenY - collectible.getY();
+			Gdx.app.log("",x+" "+y+" ");
 
 
 			return false;
