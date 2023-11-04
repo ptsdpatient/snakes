@@ -14,42 +14,36 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.Timer;
+import com.badlogic.gdx.utils.Timer.Task;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.InputProcessor;
 
+import java.util.Arrays;
+
 public class SnakeGame extends ApplicationAdapter {
 	SpriteBatch batch;
-	Texture playerTexture,wall,grass,collectibleTexture;
+	Texture playerTexture,wall,grass,collectibleTexture,playertailTexture,playerbodyTexture;
 	Sprite player,collectible;
+	//String[] playerBody={"www","www","www","www"};
 	Array<String> playerBody=new Array<>();
-	float x,y,playerX=300,playerY=300,rotation=0f,playerSpeed=0.5f,targetRotation=0f,initialRotation=0f;
-
-
-	public void handlePlayerSpeed(float rotation,float speed){
-		switch((int) rotation){
-			case 0:
-			case 360:
-				playerX+=speed;break;
-			case 90: playerY+=speed;break;
-			case 180:
-			case -180:
-				playerX-=speed;break;
-			case -90:
-			case 270:
-				playerY-=speed;break;
-			default:break;
-		}
-	}
-
+	float timeElapsed,playerX=300,playerY=300,playerSpeed=0.5f,mouseX,mouseY,angleRadians,angleDegrees,directionX,directionY,playerBodyDelayCount=2f;
+	double distance;
 
 	@Override
 	public void create () {
+		Gdx.graphics.setWindowedMode(640, 480);
+		Gdx.graphics.setResizable(false);
 		inputhandler inputprocessor = new inputhandler();
 		Gdx.input.setInputProcessor(inputprocessor);
 		batch = new SpriteBatch();
 
+
+
 		//texture initialization
 		playerTexture = new Texture("./player/head.png");
+		playerbodyTexture = new Texture("./player/body.png");
+		playertailTexture = new Texture("./player/tail.png");
 		collectibleTexture = new Texture("./collectible/flower.png");
 		grass = new Texture("./level_1/background.png");
 		wall = new Texture("./level_1/maze.png");
@@ -58,47 +52,77 @@ public class SnakeGame extends ApplicationAdapter {
 		player= new Sprite(playerTexture);
 		player.setSize(30,25);
 		player.setOrigin(15,12);
-
+		player.setPosition(playerX,playerY);
 		collectible= new Sprite(collectibleTexture);
+		collectible.setSize(30,70);
 		collectible.setPosition(200f,200f);
-		collectible.setRotation(100f);
+		collectible.setOrigin(15,35);
+
+
+
 	}
 
 	@Override
 	public void render () {
 		ScreenUtils.clear(1, 0, 0, 1);
-		handlePlayerSpeed(rotation,playerSpeed);
 		float delta = Gdx.graphics.getDeltaTime();
-		if(rotation!=targetRotation) {
-			//Gdx.app.log("updateInfo", rotation + " , " + targetRotation);
-			if(targetRotation==90.0f &&(rotation>=0f&&rotation<=90f)){
-				rotation+=2.5;
-			}else if(targetRotation==90f &&(rotation<=180f&&rotation>=90f)){
-				rotation-=2.5;
-			}else if(targetRotation==180f &&(rotation>=90f&&rotation<=180f)){
-				rotation+=2.5;
-			}else if(targetRotation==180f &&(rotation<=270f&&rotation>=180f)){
-				rotation-=2.5;
-			}else if(targetRotation==270f &&(rotation<=270f&&rotation>=180f)){
-				rotation+=2.5;
-			}else if(targetRotation==270f &&((rotation>=270f&&rotation<=360f))){
-				Gdx.app.log("this is : ","no nigga!");
-			}else if(targetRotation==360f &&(rotation<=360f&&rotation>=270f)){
-				rotation+=2.5;
-			}else if(targetRotation==0f &&(rotation>=0f&&rotation<=90f)){
-				rotation-=2.5;
-			}else if(rotation<=0 && rotation>=-90){if(rotation==-90){rotation=targetRotation;}rotation-=2.5;}
+		mouseX = Gdx.input.getX();
+		mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
+		angleRadians = MathUtils.atan2(mouseY - player.getY(), mouseX - player.getX());
+		angleDegrees = MathUtils.radiansToDegrees * angleRadians;
+		directionX = MathUtils.cosDeg(player.getRotation());
+		directionY = MathUtils.sinDeg(player.getRotation());
+
+		player.setRotation(angleDegrees);
+		player.translate(directionX*0.5f, directionY*0.5f );
+
+		timeElapsed += delta;
+		if (timeElapsed >= 0.7f) {
+			playerBody.add(player.getX() + "," + player.getY() + "," + player.getRotation());
+			for (int i = 0; i < playerBody.size - 1; i++) {
+				playerBody.add(playerBody.get(i+1));
+				playerBody.pop();
+			}
+			Gdx.app.log("playerbody is: ", playerBody.size+"");
+			timeElapsed = 0;
 		}
 
-		//float delta = Gdx.graphics.getDeltaTime();
-		//Gdx.app.log("","sprite x : "+player.getHeight());
-		//Gdx.app.log("rotation is : ",rotation+" "+"mouse X is : "+ mouseX + " mouse Y is : "+mouseY + " angle is : "+rotation);
-		player.setRotation(rotation);
-		player.setPosition(playerX,playerY);
+
+
+
 		batch.begin();
 		batch.draw(grass, 0, 0);
 		batch.draw(wall,0,0);
 		player.draw(batch);
+		/*for (int i = 0; i < playerBody.length - 1; i++) {
+			String[] props = playerBody[i].split(",");
+			Sprite body = new Sprite(playerbodyTexture);
+			body.setSize(30,25);
+			body.setOrigin(15,12);
+			body.setPosition(Float.parseFloat(props[0]),Float.parseFloat(props[1]));
+			body.setRotation(Float.parseFloat(props[2]));
+			body.draw(batch);
+		}*/
+		for (int i = 0; i < playerBody.size - 1; i++) {
+			String[] props = playerBody.get(i).split(",");
+			if (props.length != 3) {
+				System.out.println("Invalid number of properties in playerBody[" + i + "]: " + playerBody.get(i));
+				continue; // Skip this iteration if the properties are invalid.
+			}
+			try {
+				float x = Float.parseFloat(props[0]);
+				float y = Float.parseFloat(props[1]);
+				float rotation = Float.parseFloat(props[2]);
+				Sprite body = new Sprite(playerbodyTexture);
+				body.setSize(30, 25);
+				body.setOrigin(15, 12);
+				body.setPosition(x, y);
+				body.setRotation(rotation);
+				body.draw(batch);
+			} catch (NumberFormatException e) {
+				System.out.println("Invalid float value in playerBody[" + i + "]: " + playerBody.get(i));
+			}
+		}
 		collectible.draw(batch);
 		batch.end();
 	}
@@ -107,20 +131,14 @@ public class SnakeGame extends ApplicationAdapter {
 	public void dispose () {
 		batch.dispose();
 		playerTexture.dispose();
+		playerbodyTexture.dispose();
+		playertailTexture.dispose();
 		grass.dispose();
 	}
 
 	public class inputhandler implements InputProcessor{
 		@Override
 		public boolean keyDown(int keycode) {
-			if(targetRotation==rotation){
-			switch(keycode){
-				case Input.Keys.UP: if(rotation!=270f){if(targetRotation==360){rotation=0;} targetRotation=90f;}break;
-				case Input.Keys.DOWN: if(rotation!=90f){if(targetRotation==360){rotation=0;} targetRotation=270f;}break;
-				case Input.Keys.LEFT: if(rotation!=0f && rotation!=360f){targetRotation=180f;}break;
-				case Input.Keys.RIGHT: if(rotation!=180f && rotation!=360){if(rotation==-90f||rotation==270f){targetRotation=360f;}else targetRotation=0f;} break;
-				default : break;
-			}}
 
 			//Gdx.app.log("rotationInfo",initialRotation+" , "+targetRotation);
 			if(keycode==Input.Keys.SPACE){
@@ -166,11 +184,6 @@ public class SnakeGame extends ApplicationAdapter {
 
 		@Override
 		public boolean mouseMoved(int screenX, int screenY) {
-
-			x=screenX -collectible.getX();
-			y=screenY - collectible.getY();
-			Gdx.app.log("",x+" "+y+" ");
-
 
 			return false;
 		}
