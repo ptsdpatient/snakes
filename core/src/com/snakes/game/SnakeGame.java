@@ -77,11 +77,12 @@ public class SnakeGame extends ApplicationAdapter {
 		player.translate(directionX*0.5f, directionY*0.5f );
 
 		timeElapsed += delta;
-		if (timeElapsed >= 0.7f) {
+		if (timeElapsed >= 0.6f) {
 			playerBody.add(player.getX() + "," + player.getY() + "," + player.getRotation());
 			for (int i = 0; i < playerBody.size - 1; i++) {
 				playerBody.add(playerBody.get(i+1));
 				playerBody.pop();
+				if(playerBody.size>5) playerBody.removeIndex(0);
 			}
 			Gdx.app.log("playerbody is: ", playerBody.size+"");
 			timeElapsed = 0;
@@ -113,7 +114,7 @@ public class SnakeGame extends ApplicationAdapter {
 				float x = Float.parseFloat(props[0]);
 				float y = Float.parseFloat(props[1]);
 				float rotation = Float.parseFloat(props[2]);
-				Sprite body = new Sprite(playerbodyTexture);
+				Sprite body = new Sprite((i!=0)?playerbodyTexture:playertailTexture);
 				body.setSize(30, 25);
 				body.setOrigin(15, 12);
 				body.setPosition(x, y);
