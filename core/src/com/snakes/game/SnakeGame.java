@@ -31,12 +31,12 @@ public class SnakeGame extends ApplicationAdapter {
 
 	Sprite player,collectible;
 	Array<String> playerBody=new Array<>();
-	float timeElapsed,playerX=300,playerY=300,playerSpeed=0.5f,directionX,directionY;
+	float playerBodyUpdateTime,playerX=300,playerY=300,playerSpeed=0.5f,directionX,directionY;
 	boolean hide=false,rotatePlayer=false,rotatePlayerClockwise=true;
 
-
-
 	Rectangle playerBounds,collectibleBounds;
+
+
 	@Override
 	public void create () {
 
@@ -65,9 +65,6 @@ public class SnakeGame extends ApplicationAdapter {
 		collectible.setSize(30,30);
 		collectible.setPosition(200f,200f);
 		collectible.setOrigin(15,35);
-
-
-
 	}
 
 	@Override
@@ -93,15 +90,15 @@ public class SnakeGame extends ApplicationAdapter {
 		if(playerBounds.overlaps(collectibleBounds)){
 		hide =true;
 		}
-		timeElapsed += delta;
-		if (timeElapsed >= ((playerSpeed==0.5f)?0.55f:0.35f)) {
+		playerBodyUpdateTime += delta;
+		if (playerBodyUpdateTime >= ((playerSpeed==0.5f)?0.55f:0.35f)) {
 			playerBody.add(player.getX() + "," + player.getY() + "," + player.getRotation());
 			for (int i = 0; i < playerBody.size - 1; i++) {
 				playerBody.add(playerBody.get(i+1));
 				playerBody.pop();
 				if(playerBody.size>5) playerBody.removeIndex(0);
 			}
-			timeElapsed = 0;
+			playerBodyUpdateTime = 0;
 		}
 
 		batch.begin();
