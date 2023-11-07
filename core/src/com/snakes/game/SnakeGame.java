@@ -4,6 +4,7 @@ import static java.lang.StrictMath.atan;
 import static java.lang.StrictMath.sqrt;
 
 import com.badlogic.gdx.ApplicationAdapter;
+import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.assets.AssetManager;
@@ -14,7 +15,9 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Polygon;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
@@ -31,16 +34,56 @@ public class SnakeGame extends ApplicationAdapter {
 
 	Sprite player,collectible;
 	Array<String> playerBody=new Array<>();
+
+	Array<GameObject> worldObject = new Array<GameObject>();
 	float playerBodyUpdateTime,playerX=300,playerY=300,playerSpeed=0.5f,directionX,directionY;
 	boolean hide=false,rotatePlayer=false,rotatePlayerClockwise=true;
 
-	Rectangle playerBounds,collectibleBounds;
+	float[] playerVertices,collectibleVertices;
 
+	Polygon playerBounds,collectibleBounds;
+
+public static class GameObject{
+	private Sprite sprite;
+	private Texture spriteTexture;
+	private float x,y,rotation,width,height;
+
+	private Polygon boundingPolygon;
+	public GameObject(float x,float y,float rotation,float width,float height,boolean block,String texture){
+		this.spriteTexture=new Texture(texture);
+		this.sprite = new Sprite(spriteTexture);
+		this.x=x;
+		this.y=y;
+		this.rotation=rotation;
+		this.width=width;
+		this.height=height;
+		float[] vertices= new float[]{
+				0, 0,
+				width, 0,
+				width, height,
+				0, height
+		};
+		sprite.setPosition(x,y);
+		sprite.setSize(width,height);
+		sprite.setOrigin(width/2,height/2);
+		sprite.setRotation(rotation);
+		this.boundingPolygon=new Polygon(vertices);
+		boundingPolygon.setPosition(x,y);
+		boundingPolygon.setOrigin(width/2,height/2);
+
+
+	}
+	public Polygon getBoundingPolygon(){
+		boundingPolygon.setPosition(x,y);
+		return boundingPolygon;
+	}
+	public void render(SpriteBatch batch){
+		sprite.draw(batch);
+	}
+	}
 
 	@Override
 	public void create () {
-
-
 		//Gdx.graphics.setWindowedMode(640, 480);
 		//Gdx.graphics.setResizable(false);
 		inputhandler inputprocessor = new inputhandler();
@@ -65,7 +108,26 @@ public class SnakeGame extends ApplicationAdapter {
 		collectible.setSize(30,30);
 		collectible.setPosition(200f,200f);
 		collectible.setOrigin(15,35);
+
+		GameObject wall1 = new GameObject(50,50,90,50,10,true,"maze-wall.png");
+		GameObject wall2 = new GameObject(400,275,0,50,10,true,"maze-block.png");
+
+		worldObject.add(wall1,wall2);
+
+		playerVertices= new float[]{
+				0, 0,
+				player.getWidth(), 0,
+				player.getWidth(), player.getHeight(),
+				0, player.getHeight()
+		};
+		collectibleVertices= new float[]{
+				0, 0,
+				collectible.getWidth(), 0,
+				collectible.getWidth(), collectible.getHeight(),
+				0, collectible.getHeight()
+		};
 	}
+
 
 	@Override
 	public void render () {
@@ -84,12 +146,14 @@ public class SnakeGame extends ApplicationAdapter {
 		player.translate(directionX*playerSpeed, directionY*playerSpeed );
 
 		//collider bounds initialization
-		collectibleBounds = collectible.getBoundingRectangle();
-		playerBounds = player.getBoundingRectangle();
+		collectibleBounds = new Polygon(collectibleVertices);
+		playerBounds = new Polygon(playerVertices);
+		playerBounds.setPosition(player.getX(),player.getY());
 
-		if(playerBounds.overlaps(collectibleBounds)){
+		if(Intersector.overlapConvexPolygons(playerBounds,collectibleBounds)){
 		hide =true;
 		}
+
 		playerBodyUpdateTime += delta;
 		if (playerBodyUpdateTime >= ((playerSpeed==0.5f)?0.55f:0.35f)) {
 			playerBody.add(player.getX() + "," + player.getY() + "," + player.getRotation());
@@ -101,9 +165,21 @@ public class SnakeGame extends ApplicationAdapter {
 			playerBodyUpdateTime = 0;
 		}
 
+		for(GameObject go : worldObject){
+			if(Intersector.overlapConvexPolygons(playerBounds,go.getBoundingPolygon())){
+				//player.setRotation(player.getRotation()+45f);
+				//player.translate(-2.5f*directionX*playerSpeed, -2.5f*directionY*playerSpeed );
+				Gdx.app.log("","");
+			}
+		}
+
 		batch.begin();
 		batch.draw(grass, 0, 0);
 
+		//walls
+		for(GameObject wall : worldObject){
+			wall.render(batch);
+		}
 
 		if(!hide){
 			collectible.draw(batch);
